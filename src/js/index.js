@@ -14,6 +14,7 @@ function TestController() {
   //   this.testInit = testInit;
   this.mutateOptions = function () {
     this.question.options = this.question.options.split(";");
+    console.log("take from prototype");
   };
   this.loadQuestionData = async function () {
     try {
@@ -48,15 +49,15 @@ function TestController() {
 }
 function Question(question) {
   //Брать из прототипа(из контролера)
-  console.log(this);
+  Object.setPrototypeOf(this, new TestController());
   this.question = question;
   const questionContainer = document.getElementById("questionContainer");
   questionContainer.innerHTML = `
                     <div class="questionText">${this.question.text}</div>`;
   //Создает Dom вопроса при создании
   //Выводит текст вопроса
+  console.log(this);
   this.mutateOptions();
-  console.log(this.question);
   this.isRadioQuestion = function () {
     return this.question.answers.lenght > 1 ? true : false;
   };
