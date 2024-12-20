@@ -110,12 +110,14 @@ function Question(question) {
       }, 1000);
     }
   };
+
   this.deleteTimer = function () {
     clearInterval(this.timerInterval);
     this.timerInterval = null;
     const timer = document.getElementById("timer");
     timer.innerHTML = ``;
   };
+
   this.createTextAnswer = function () {
     this.question = question;
     this.options = this.question.options;
@@ -186,6 +188,7 @@ function TypedQuestion(options, type) {
 function TestService(user) {
   this.currentQuestion = null;
   this.sumResult = 0;
+
   this.testInit = async function () {
     try {
       const response = await fetch("http://localhost:8089/api/Test/TestInit");
@@ -206,6 +209,7 @@ function TestService(user) {
       console.log("error loading id test " + error);
     }
   };
+
   this.showResult = function () {
     const result = document.getElementById("answerContainer");
     result.innerHTML = null;
@@ -241,6 +245,11 @@ function TestService(user) {
     });
   };
 }
+
+//
+//
+//
+
 let prevObj;
 let testService = null;
 function startTest(user) {
@@ -252,8 +261,28 @@ function startTest(user) {
 function init() {
   const user = new User();
   startTest(user);
-
   document.getElementById("restartButton").onclick = () => startTest(user);
 }
 
 init();
+
+Array.prototype.first = function () {
+  return this[0];
+};
+Array.prototype.last = function () {
+  return this[this.length - 1];
+};
+Array.prototype.random = function () {
+  return this[
+    Math.round(Math.round(Math.random() * (10 * (this.length - 1))) / 10)
+  ];
+};
+console.log([2, 5, 5, 3, 2, 4].first());
+console.log([2, 5, 5, 3, 2, 4].last());
+console.log(
+  [
+    2, 5, 5, 3, 2, 4, 211252315, 228, 15454353454354345, 424, 4325, 65436, 7437,
+    347, 3457, 347, 37454, 73457, 73547, 533,
+  ].random()
+);
+function delay() {}
