@@ -285,4 +285,3 @@ console.log(
     347, 3457, 347, 37454, 73457, 73547, 533,
   ].random()
 );
-function delay() {}
