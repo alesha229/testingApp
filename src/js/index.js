@@ -17,15 +17,17 @@ function TestController() {
   this.isInit = null;
   this.isLast = false;
   this.mutateOptions = function () {
-    this.question.options = this.question.options.split("#;");
+    this.question.questionData.options =
+      this.question.questionData.options.split("#;");
   };
 
   this.mutateAnswers = function () {
-    this.question.answers = this.question.answers.split("#;");
+    this.question.questionData.answers =
+      this.question.questionData.answers.split("#;");
   };
 
   this.isRadioQuestion = function () {
-    return this.question.answers.length > 1 ? true : false;
+    return this.question.questionData.answers.length > 1 ? true : false;
   };
 
   this.clearQuestion = function () {
@@ -58,9 +60,18 @@ function TestController() {
         this.question = null;
       }
       this.questionData = data;
-      this.question = new Question(this.questionData);
 
-      Object.setPrototypeOf(this.question, this);
+      this.question = new Question(this.questionData);
+      // TestController.prototype = Object.create(this);
+      // this.controller = new TestController(user);
+
+      // Question.prototype = Object.create(this);
+      // this.question = new Question(this.questionData);
+      // this.question = new Question(this.questionData);
+
+      // Object.setPrototypeOf(this.question, this);
+      this.mutateOptions();
+      this.mutateAnswers();
       this.question.deleteTimer();
       if (data) this.question.questionInit();
     });
@@ -78,10 +89,8 @@ function TestController() {
 }
 
 function Question(question) {
-  this.question = question;
+  this.questionData = question;
   this.questionInit = function () {
-    this.mutateOptions();
-    this.mutateAnswers();
     this.createTextAnswer();
     this.createAnswers();
     this.createNextbutton();
@@ -103,7 +112,7 @@ function Question(question) {
         const timer = document.getElementById("timer");
         timer.innerHTML = `Осталось времени: ${this.timeOut} секунд`;
         this.timeOut--;
-        console.log(this);
+        // console.log(this);
         if (this.timeOut < 0) {
           this.handleNext();
         }
@@ -124,7 +133,7 @@ function Question(question) {
   };
 
   this.createAnswers = function () {
-    this.isRadioQuestion()
+    this.controller.isRadioQuestion()
       ? (this.answer = new TypedQuestion(this.options, "checkbox"))
       : (this.answer = new TypedQuestion(this.options, "radio"));
     Object.setPrototypeOf(this.answer, this);
@@ -145,7 +154,7 @@ function Question(question) {
     );
 
     this.storyAnswer.right = allCorrectSelected && !hasIncorrectSelected;
-    this.createNextQuestionObject(this.storyAnswer);
+    this.controller.createNextQuestionObject(this.storyAnswer);
   };
 
   this.createNextbutton = function () {
@@ -154,7 +163,8 @@ function Question(question) {
     nextButton.classList =
       "absolute self-center top-50 mt-40 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800";
     nextButton.id = "buttonAnswer";
-    if (!this.isLast) {
+    console.log(this);
+    if (!this.controller.isLast) {
       nextButton.innerHTML = `Следующий вопорос`;
       nextButton.onclick = () => this.handleNext();
     } else {
@@ -193,15 +203,21 @@ function TestService(user) {
         this.currentQuestion = 0;
         const data = await response.json();
         this.maxQuestion = data;
+
+        // this.controller = Object.create(this);
+        // this.controller = new TestController(user);
+        Question.prototype = Object.create(this);
+        Question.prototype.constructor = Question;
+        TestController.prototype = Object.create(this);
         this.controller = new TestController(user);
-        Object.setPrototypeOf(this.controller, this);
+        // Object.setPrototypeOf(this.controller, this);
 
         this.controller.createNextQuestionObject();
       } else {
         // this.createNextQuestionObject();
       }
     } catch (error) {
-      console.log("error loading id test");
+      console.log("error loading id test " + error);
     }
   };
   this.showResult = function () {
@@ -211,6 +227,11 @@ function TestService(user) {
     questionContainer.innerHTML = null;
     let rightSmile;
     result.classList = "flex flex-col items-center";
+    const rightAnswers = this.story.filter((item) => item.right).length;
+    const rightAnswersContainer = document.createElement("div");
+    rightAnswersContainer.innerHTML = `Правильных ответов : ${rightAnswers} из ${this.story.length}`;
+    result.appendChild(rightAnswersContainer);
+
     this.story.forEach((element) => {
       if (element.right) {
         this.sumResult += 1;
@@ -234,9 +255,11 @@ function TestService(user) {
     });
   };
 }
-
+let prevObj;
+let testService = null;
 function startTest(user) {
-  const testService = new TestService(user);
+  if (testService) testService.controller.question.deleteTimer();
+  testService = new TestService(user);
   testService.testInit();
 }
 
