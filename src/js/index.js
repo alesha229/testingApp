@@ -62,14 +62,6 @@ function TestController() {
       this.questionData = data;
 
       this.question = new Question(this.questionData);
-      // TestController.prototype = Object.create(this);
-      // this.controller = new TestController(user);
-
-      // Question.prototype = Object.create(this);
-      // this.question = new Question(this.questionData);
-      // this.question = new Question(this.questionData);
-
-      // Object.setPrototypeOf(this.question, this);
       this.mutateOptions();
       this.mutateAnswers();
       this.question.deleteTimer();
@@ -112,7 +104,6 @@ function Question(question) {
         const timer = document.getElementById("timer");
         timer.innerHTML = `Осталось времени: ${this.timeOut} секунд`;
         this.timeOut--;
-        // console.log(this);
         if (this.timeOut < 0) {
           this.handleNext();
         }
@@ -163,7 +154,6 @@ function Question(question) {
     nextButton.classList =
       "absolute self-center top-50 mt-40 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800";
     nextButton.id = "buttonAnswer";
-    console.log(this);
     if (!this.controller.isLast) {
       nextButton.innerHTML = `Следующий вопорос`;
       nextButton.onclick = () => this.handleNext();
@@ -204,17 +194,13 @@ function TestService(user) {
         const data = await response.json();
         this.maxQuestion = data;
 
-        // this.controller = Object.create(this);
-        // this.controller = new TestController(user);
         Question.prototype = Object.create(this);
         Question.prototype.constructor = Question;
         TestController.prototype = Object.create(this);
         this.controller = new TestController(user);
-        // Object.setPrototypeOf(this.controller, this);
 
         this.controller.createNextQuestionObject();
       } else {
-        // this.createNextQuestionObject();
       }
     } catch (error) {
       console.log("error loading id test " + error);
