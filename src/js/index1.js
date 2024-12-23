@@ -9,6 +9,7 @@ class TestService {
     this.controller = null;
     this.maxQuestion = null;
     this.currentQuestion = 0;
+    this.controller = null;
   }
 
   async testInit() {
@@ -21,7 +22,7 @@ class TestService {
         // Question.prototype = Object.create(this);
         // Question.prototype.constructor = Question;
         // TestController.prototype = Object.create(this);
-        this.controller = new TestController();
+        this.controller = new TestController(this);
 
         this.controller.createNextQuestionObject();
       } else {
@@ -38,12 +39,14 @@ class TestService {
     questionContainer.innerHTML = null;
     let rightSmile;
     result.classList = "flex flex-col items-center";
-    const rightAnswers = this.story.filter((item) => item.right).length;
+    const rightAnswers = this.controller.story.filter(
+      (item) => item.right
+    ).length;
     const rightAnswersContainer = document.createElement("div");
-    rightAnswersContainer.innerHTML = `Правильных ответов : ${rightAnswers} из ${this.story.length}`;
+    rightAnswersContainer.innerHTML = `Правильных ответов : ${rightAnswers} из ${this.controller.story.length}`;
     result.appendChild(rightAnswersContainer);
 
-    this.story.forEach((element) => {
+    this.controller.story.forEach((element) => {
       if (element.right) {
         this.sumResult += 1;
         rightSmile = '<span style="color: green;">✓</span>';
@@ -68,29 +71,26 @@ class TestService {
 }
 
 class TestController extends TestService {
-  constructor() {
+  constructor(parent) {
     super();
-
+    this.service = parent;
     this.story = [];
     this.isInit = null;
     this.isLast = false;
     // this.currentQuestion = null;
-    this.questionData = null;
+    this.response = null;
     this.question = null;
-    console.log(this);
   }
   mutateOptions() {
-    this.question.questionData.options =
-      this.question.questionData.options.split("#;");
+    this.question.options = this.question.options.split("#;");
   }
 
   mutateAnswers() {
-    this.question.questionData.answers =
-      this.question.questionData.answers.split("#;");
+    this.question.answers = this.question.answers.split("#;");
   }
 
-  funcisRadioQuestiontion() {
-    return this.question.questionData.answers.length > 1 ? true : false;
+  isRadioQuestion() {
+    return this.question.answers.length > 1 ? true : false;
   }
 
   clearQuestion() {
@@ -99,20 +99,18 @@ class TestController extends TestService {
   }
 
   async loadQuestionData() {
-    console.log(this.currentQuestion);
     try {
       const response = await fetch(
-        `http://localhost:8089/api/Test/GetNext/${this.currentQuestion}`
+        `http://localhost:8089/api/Test/GetNext/${this.service.currentQuestion}`
       );
       if (response.ok) {
-        this.currentQuestion += 1;
-        result = await response.json();
-        return result;
+        this.service.currentQuestion += 1;
+        return await response.json();
       } else {
         this.createNextQuestionObject();
       }
     } catch (error) {
-      console.log("error loading test info");
+      console.log("error loading test info " + error);
     }
   }
 
@@ -123,22 +121,22 @@ class TestController extends TestService {
         this.clearQuestion();
         this.question = null;
       }
-      this.questionData = data;
-      this.question = new Question(this.questionData);
-      this.mutateOptions();
-      this.mutateAnswers();
+      this.response = data;
+      this.question = new Question(this.response, this);
+      this.question.mutateOptions();
+      this.question.mutateAnswers();
       this.question.deleteTimer();
       if (data) this.question.questionInit();
     });
   }
 
   createNextQuestionObject(storyChunk) {
-    this.isLast = this.currentQuestion >= this.maxQuestion - 1;
-    console.log(this.maxQuestion);
-    console.log(this.currentQuestion);
+    this.isLast = this.service.currentQuestion >= this.service.maxQuestion - 1;
+    // console.log(this.service.maxQuestion);
+    // console.log(this.service.currentQuestion);
     if (storyChunk) this.story.push(storyChunk);
-    if (this.currentQuestion >= this.maxQuestion) {
-      this.showResult();
+    if (this.service.currentQuestion >= this.service.maxQuestion) {
+      this.service.showResult();
     } else {
       this.questionFactory();
     }
@@ -146,9 +144,11 @@ class TestController extends TestService {
 }
 
 class Question extends TestController {
-  constructor(question) {
+  constructor(question, controller) {
     super();
-    this.questionData = question;
+    this.controller = controller;
+    this.question = question;
+    console.log(this);
   }
 
   questionInit() {
@@ -188,14 +188,14 @@ class Question extends TestController {
   }
 
   createTextAnswer() {
-    this.question = question;
+    // this.question = question;
     this.options = this.question.options;
     const questionContainer = document.getElementById("questionContainer");
     questionContainer.innerHTML = `<div class="questionText mb-6 text-lg font-normal text-gray-500 lg:text-xl sm:px-16 xl:px-48 dark:text-gray-400 text-center">${this.question.text}</div>`;
   }
 
   createAnswers() {
-    this.controller.isRadioQuestion()
+    this.isRadioQuestion()
       ? (this.answer = new TypedQuestion(this.options, "checkbox"))
       : (this.answer = new TypedQuestion(this.options, "radio"));
     Object.setPrototypeOf(this.answer, this);
@@ -239,6 +239,7 @@ class Question extends TestController {
 class TypedQuestion extends Question {
   constructor(options, type) {
     super();
+    this.type = type;
     this.options = options;
     this.initInputs();
   }
@@ -252,7 +253,7 @@ class TypedQuestion extends Question {
 
       const entryElement = document.createElement("input");
       entryElement.id = index;
-      entryElement.type = type;
+      entryElement.type = this.type;
       entryElement.name = "radio";
       label.appendChild(entryElement);
       label.appendChild(document.createTextNode(element));
@@ -267,8 +268,7 @@ class TypedQuestion extends Question {
 let prevObj;
 let testService = null;
 function startTest(user) {
-  //   if (testService) testService.controller.question.deleteTimer();
-  console.log(testService);
+  if (testService) testService.controller.question.deleteTimer();
   testService = new TestService(user);
   testService.testInit();
 }
