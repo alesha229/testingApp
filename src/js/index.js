@@ -12,58 +12,31 @@ function User() {
 }
 
 function TestController() {
+  this.currentQuestion = 0;
+  this.sumResult = 0;
+  this.service = new TestService();
   this.story = [];
   this.maxQuestion;
   this.isInit = null;
   this.isLast = false;
-  this.mutateOptions = function () {
-    this.question.questionData.options =
-      this.question.questionData.options.split("#;");
+  this.init = function () {
+    this.maxQuestion = this.service.testInit();
+    this.questionFactory();
   };
 
-  this.mutateAnswers = function () {
-    this.question.questionData.answers =
-      this.question.questionData.answers.split("#;");
-  };
-
-  this.isRadioQuestion = function () {
-    return this.question.questionData.answers.length > 1 ? true : false;
-  };
-
-  this.clearQuestion = function () {
+  clearQuestion = function () {
     document.getElementById("questionContainer").innerHTML = null;
     document.getElementById("answerContainer").innerHTML = null;
   };
 
-  this.loadQuestionData = async function () {
-    try {
-      const response = await fetch(
-        `http://localhost:8089/api/Test/GetNext/${this.currentQuestion}`
-      );
-      if (response.ok) {
-        this.currentQuestion += 1;
-        result = await response.json();
-        return result;
-      } else {
-        this.createNextQuestionObject();
-      }
-    } catch (error) {
-      console.log("error loading test info");
-    }
-  };
-
   this.questionFactory = function () {
     //метод для создания новых объектов вопросов в зависимости от типа вопроса,(checkBox,radio). Так же создает родителя question и настраивает наследование
-    this.loadQuestionData().then((data) => {
+    this.service.getNext(this.currentQuestion).then((data) => {
       if (this.question != undefined) {
         this.clearQuestion();
         this.question = null;
       }
-      this.questionData = data;
-
-      this.question = new Question(this.questionData);
-      this.mutateOptions();
-      this.mutateAnswers();
+      this.question = new Question(data);
       this.question.deleteTimer();
       if (data) this.question.questionInit();
     });
@@ -83,6 +56,8 @@ function TestController() {
 function Question(question) {
   this.questionData = question;
   this.questionInit = function () {
+    mutateOptions();
+    mutateAnswers();
     this.createTextAnswer();
     this.createAnswers();
     this.createNextbutton();
@@ -97,7 +72,17 @@ function Question(question) {
     this.deleteTimer();
     this.createTimer();
   };
+  mutateOptions = function () {
+    this.questionData.options = this.questionData.options.split("#;");
+  };
 
+  mutateAnswers = function () {
+    this.questionData.answers = this.questionData.answers.split("#;");
+  };
+
+  isRadioQuestion = function () {
+    return this.questionData.answers.length > 1 ? true : false;
+  };
   this.createTimer = function () {
     if (this.timeOut != 0) {
       this.timerInterval = setInterval(() => {
@@ -185,31 +170,38 @@ function TypedQuestion(options, type) {
   });
 }
 
-function TestService(user) {
-  this.currentQuestion = null;
-  this.sumResult = 0;
-
+function TestService() {
   this.testInit = async function () {
     try {
       const response = await fetch("http://localhost:8089/api/Test/TestInit");
       if (response.ok) {
         this.currentQuestion = 0;
         const data = await response.json();
-        this.maxQuestion = data;
-
-        Question.prototype = Object.create(this);
-        Question.prototype.constructor = Question;
-        TestController.prototype = Object.create(this);
-        this.controller = new TestController(user);
-
-        this.controller.createNextQuestionObject();
+        // Question.prototype = Object.create(this);
+        // Question.prototype.constructor = Question;
+        // TestController.prototype = Object.create(this);
+        return data;
       } else {
       }
     } catch (error) {
       console.log("error loading id test " + error);
     }
   };
-
+  this.getNext = async function (index) {
+    try {
+      const response = await fetch(
+        `http://localhost:8089/api/Test/GetNext/${index}`
+      );
+      if (response.ok) {
+        this.currentQuestion += 1;
+        result = await response.json();
+        return result;
+      } else {
+      }
+    } catch (error) {
+      console.log("error loading test info");
+    }
+  };
   this.showResult = function () {
     const result = document.getElementById("answerContainer");
     result.innerHTML = null;
@@ -253,9 +245,10 @@ function TestService(user) {
 let prevObj;
 let testService = null;
 function startTest(user) {
-  if (testService) testService.controller.question.deleteTimer();
-  testService = new TestService(user);
-  testService.testInit();
+  // if (testService) testService.controller.question.deleteTimer();
+  testController = new TestController(user);
+  testController.init();
+  // testController.testInit();
 }
 
 function init() {
@@ -266,22 +259,22 @@ function init() {
 
 init();
 
-Array.prototype.first = function () {
-  return this[0];
-};
-Array.prototype.last = function () {
-  return this[this.length - 1];
-};
-Array.prototype.random = function () {
-  return this[
-    Math.round(Math.round(Math.random() * (10 * (this.length - 1))) / 10)
-  ];
-};
-console.log([2, 5, 5, 3, 2, 4].first());
-console.log([2, 5, 5, 3, 2, 4].last());
-console.log(
-  [
-    2, 5, 5, 3, 2, 4, 211252315, 228, 15454353454354345, 424, 4325, 65436, 7437,
-    347, 3457, 347, 37454, 73457, 73547, 533,
-  ].random()
-);
+// Array.prototype.first = function () {
+//   return this[0];
+// };
+// Array.prototype.last = function () {
+//   return this[this.length - 1];
+// };
+// Array.prototype.random = function () {
+//   return this[
+//     Math.round(Math.round(Math.random() * (10 * (this.length - 1))) / 10)
+//   ];
+// };
+// console.log([2, 5, 5, 3, 2, 4].first());
+// console.log([2, 5, 5, 3, 2, 4].last());
+// console.log(
+//   [
+//     2, 5, 5, 3, 2, 4, 211252315, 228, 15454353454354345, 424, 4325, 65436, 7437,
+//     347, 3457, 347, 37454, 73457, 73547, 533,
+//   ].random()
+// );

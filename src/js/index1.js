@@ -148,7 +148,6 @@ class Question extends TestController {
     super();
     this.controller = controller;
     this.question = question;
-    console.log(this);
   }
 
   questionInit() {
