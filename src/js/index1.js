@@ -267,6 +267,7 @@ class TypedQuestion extends Question {
 let prevObj;
 let testService = null;
 function startTest(user) {
+  console.log(testService);
   if (testService) testService.controller.question.deleteTimer();
   testService = new TestService(user);
   testService.testInit();
