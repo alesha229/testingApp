@@ -277,6 +277,8 @@ Object.assign(RadioQuestion.prototype, {
       this.storyAnswer.userAnswers.push(input.parentNode.textContent);
     });
     //Вызываем метод родителя
+
+    //Не использем колбэк т.к контекст мы передаем сами и метод может существовать в вакууме работая с контекстом который мы в него передаем.
     Question.prototype.handleNext.call(this, this.storyAnswer);
     //Вызываем через колбек родительский одноименный метод handleNext
     // this.handleNextCallback.call(this, this.storyAnswer);
