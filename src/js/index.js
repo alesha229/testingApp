@@ -276,8 +276,10 @@ Object.assign(RadioQuestion.prototype, {
     document.querySelectorAll("input:checked").forEach((input, index) => {
       this.storyAnswer.userAnswers.push(input.parentNode.textContent);
     });
+    //Вызываем метод родителя
+    Question.prototype.handleNext.call(this, this.storyAnswer);
     //Вызываем через колбек родительский одноименный метод handleNext
-    this.handleNextCallback.call(this, this.storyAnswer);
+    // this.handleNextCallback.call(this, this.storyAnswer);
   },
 
   renderQuestion() {
@@ -321,6 +323,7 @@ Object.assign(CheckBoxQuestion.prototype, {
     document.querySelectorAll("input:checked").forEach((input, index) => {
       this.storyAnswer.userAnswers.push(input.parentNode.textContent);
     });
+    //в классах могли бы использовать super.handleNext(this.storyAnswer)
     this.handleNextCallback.call(this, this.storyAnswer);
   },
   renderQuestion() {
